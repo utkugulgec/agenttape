@@ -202,25 +202,55 @@ export default function FlowDiagram({ spans, selectedSpanId, onSpanClick }: Prop
   }
 
   return (
-    <div style={{ height: Math.max(totalHeight, 180) }} className="bg-gray-950 rounded-xl">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        fitView={false}
-        defaultViewport={{ x: 20, y: 10, zoom: 1 }}
-        proOptions={{ hideAttribution: true }}
-        nodesDraggable={false}
-        nodesConnectable={false}
-        elementsSelectable={false}
-        zoomOnScroll={false}
-        panOnDrag={false}
-        onNodeClick={(_evt, node) => {
-          const span = (node.data as { span?: Span }).span
-          if (!span) return
-          onSpanClick(selectedSpanId === span.id ? null : span)
-        }}
-      />
+    <div className="rounded-xl border border-gray-700 overflow-hidden">
+      <div style={{ height: Math.max(totalHeight, 180) }} className="bg-gray-950 cursor-grab active:cursor-grabbing">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          fitView={false}
+          defaultViewport={{ x: 20, y: 10, zoom: 1 }}
+          proOptions={{ hideAttribution: true }}
+          nodesDraggable={false}
+          nodesConnectable={false}
+          elementsSelectable={false}
+          zoomOnScroll={false}
+          panOnDrag={true}
+          onNodeClick={(_evt, node) => {
+            const span = (node.data as { span?: Span }).span
+            if (!span) return
+            onSpanClick(selectedSpanId === span.id ? null : span)
+          }}
+        />
+      </div>
+      {/* legend */}
+      <div className="flex items-center gap-5 px-4 py-2 border-t border-gray-700 bg-gray-900">
+        <span className="text-gray-500 text-xs font-medium mr-1">Legend</span>
+        <LegendItem color="bg-blue-950 border-blue-700" label="LLM call" />
+        <LegendItem color="bg-purple-950 border-purple-700" label="Tool use" />
+        <LegendItem color="bg-red-950 border-red-700" label="Error" />
+        <div className="flex items-center gap-1.5">
+          <svg width="28" height="8"><line x1="0" y1="4" x2="28" y2="4" stroke="#3b82f6" strokeWidth="2" strokeDasharray="4 2" /></svg>
+          <span className="text-gray-500 text-xs">To LLM</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <svg width="28" height="8"><line x1="0" y1="4" x2="28" y2="4" stroke="#a855f7" strokeWidth="2" /></svg>
+          <span className="text-gray-500 text-xs">To tool</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <svg width="28" height="8"><line x1="0" y1="4" x2="28" y2="4" stroke="#3b82f6" strokeWidth="2" /></svg>
+          <span className="text-gray-500 text-xs">Tool result</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function LegendItem({ color, label }: { color: string; label: string }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <div className={`h-3 w-3 rounded border ${color}`} />
+      <span className="text-gray-500 text-xs">{label}</span>
     </div>
   )
 }
