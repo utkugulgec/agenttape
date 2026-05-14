@@ -14,6 +14,7 @@ import (
 	tracepb "go.opentelemetry.io/proto/otlp/trace/v1"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/utkugulgec/agenttape/internal/normalizer"
 	"github.com/utkugulgec/agenttape/internal/storage"
 )
 
@@ -79,23 +80,26 @@ func (h *Handler) IngestTraces(w http.ResponseWriter, r *http.Request) {
 					durationMs = &d
 				}
 
-				spanAttrs, _ := json.Marshal(attrsToMap(span.Attributes))
+				rawAttrs := attrsToMap(span.Attributes)
+				spanAttrs, _ := json.Marshal(rawAttrs)
+				normalized, _ := json.Marshal(normalizer.Normalize(rawAttrs))
 				spanEvents, _ := json.Marshal(convertEvents(span.Events))
 
 				s := &storage.Span{
-					SpanID:        spanID,
-					TraceID:       traceID,
-					ParentSpanID:  parentSpanID,
-					SessionID:     session.ID,
-					Name:          span.Name,
-					Kind:          kindString(span.Kind),
-					StatusCode:    statusString(span.GetStatus().GetCode()),
-					StatusMessage: span.GetStatus().GetMessage(),
-					Attributes:    spanAttrs,
-					Events:        spanEvents,
-					StartedAt:     startedAt,
-					EndedAt:       endedAt,
-					DurationMs:    durationMs,
+					SpanID:          spanID,
+					TraceID:         traceID,
+					ParentSpanID:    parentSpanID,
+					SessionID:       session.ID,
+					Name:            span.Name,
+					Kind:            kindString(span.Kind),
+					StatusCode:      statusString(span.GetStatus().GetCode()),
+					StatusMessage:   span.GetStatus().GetMessage(),
+					Attributes:      spanAttrs,
+					NormalizedAttrs: normalized,
+					Events:          spanEvents,
+					StartedAt:       startedAt,
+					EndedAt:         endedAt,
+					DurationMs:      durationMs,
 				}
 				if err := h.spans.Insert(ctx, s); err != nil {
 					writeError(w, http.StatusInternalServerError, "failed to insert span")

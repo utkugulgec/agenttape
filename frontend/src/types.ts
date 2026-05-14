@@ -17,6 +17,21 @@ export interface SpanEvent {
   attributes: Record<string, unknown>
 }
 
+export interface NormalizedAttrs {
+  schema: 'claude_code' | 'genai_spec' | 'unknown'
+  operation_name?: string
+  provider_name?: string
+  request_model?: string
+  response_model?: string
+  input_tokens?: number
+  output_tokens?: number
+  cache_read_tokens?: number
+  cache_creation_tokens?: number
+  ttft_ms?: number
+  finish_reason?: string
+  tool_name?: string
+}
+
 export interface Span {
   id: string
   span_id: string
@@ -28,6 +43,7 @@ export interface Span {
   status_code: 'ok' | 'error' | 'unset'
   status_message: string
   attributes: Record<string, unknown>
+  normalized_attrs: NormalizedAttrs | null
   events: SpanEvent[]
   started_at: string
   ended_at: string | null

@@ -20,17 +20,18 @@ func (r *SpanRepo) Insert(ctx context.Context, s *Span) error {
 	const q = `
 		INSERT INTO spans
 			(span_id, trace_id, parent_span_id, session_id, name, kind,
-			 status_code, status_message, attributes, events, started_at, ended_at, duration_ms)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+			 status_code, status_message, attributes, normalized_attrs, events,
+			 started_at, ended_at, duration_ms)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 		ON CONFLICT (trace_id, span_id) DO NOTHING
 		RETURNING id`
 	err := r.pool.QueryRow(ctx, q,
 		s.SpanID, s.TraceID, s.ParentSpanID, s.SessionID, s.Name, s.Kind,
-		s.StatusCode, s.StatusMessage, s.Attributes, s.Events,
+		s.StatusCode, s.StatusMessage, s.Attributes, s.NormalizedAttrs, s.Events,
 		s.StartedAt, s.EndedAt, s.DurationMs,
 	).Scan(&s.ID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil // duplicate span, already ingested
+		return nil
 	}
 	return err
 }
@@ -38,13 +39,14 @@ func (r *SpanRepo) Insert(ctx context.Context, s *Span) error {
 func (r *SpanRepo) GetByID(ctx context.Context, id string) (*Span, error) {
 	const q = `
 		SELECT id, span_id, trace_id, parent_span_id, session_id, name, kind,
-		       status_code, status_message, attributes, events, started_at, ended_at, duration_ms
+		       status_code, status_message, attributes, normalized_attrs, events,
+		       started_at, ended_at, duration_ms
 		FROM spans
 		WHERE id=$1`
 	s := &Span{}
 	err := r.pool.QueryRow(ctx, q, id).Scan(
 		&s.ID, &s.SpanID, &s.TraceID, &s.ParentSpanID, &s.SessionID, &s.Name, &s.Kind,
-		&s.StatusCode, &s.StatusMessage, &s.Attributes, &s.Events,
+		&s.StatusCode, &s.StatusMessage, &s.Attributes, &s.NormalizedAttrs, &s.Events,
 		&s.StartedAt, &s.EndedAt, &s.DurationMs,
 	)
 	if err != nil {
@@ -56,7 +58,8 @@ func (r *SpanRepo) GetByID(ctx context.Context, id string) (*Span, error) {
 func (r *SpanRepo) ListBySession(ctx context.Context, sessionID string) ([]*Span, error) {
 	const q = `
 		SELECT id, span_id, trace_id, parent_span_id, session_id, name, kind,
-		       status_code, status_message, attributes, events, started_at, ended_at, duration_ms
+		       status_code, status_message, attributes, normalized_attrs, events,
+		       started_at, ended_at, duration_ms
 		FROM spans
 		WHERE session_id=$1
 		ORDER BY started_at ASC`
@@ -71,7 +74,7 @@ func (r *SpanRepo) ListBySession(ctx context.Context, sessionID string) ([]*Span
 		s := &Span{}
 		if err := rows.Scan(
 			&s.ID, &s.SpanID, &s.TraceID, &s.ParentSpanID, &s.SessionID, &s.Name, &s.Kind,
-			&s.StatusCode, &s.StatusMessage, &s.Attributes, &s.Events,
+			&s.StatusCode, &s.StatusMessage, &s.Attributes, &s.NormalizedAttrs, &s.Events,
 			&s.StartedAt, &s.EndedAt, &s.DurationMs,
 		); err != nil {
 			return nil, err
