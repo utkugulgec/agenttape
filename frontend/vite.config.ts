@@ -8,6 +8,7 @@ export default defineConfig({
       '/health': 'http://localhost:8080',
       '/sessions': 'http://localhost:8080',
       '/v1': 'http://localhost:8080',
+      '/ws': { target: 'ws://localhost:8080', ws: true },
     },
   },
 })

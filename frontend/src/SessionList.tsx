@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { api } from './api'
 import type { Session } from './types'
+import { useWebSocket } from './useWebSocket'
 
 function formatDuration(ms: number | null): string {
   if (ms === null) return '—'
@@ -40,6 +41,16 @@ export default function SessionList({ onSelect }: Props) {
       .catch((e: unknown) => setError(String(e)))
       .finally(() => setLoading(false))
   }, [])
+
+  const refresh = useCallback(() => {
+    api.sessions.list().then((r) => setSessions(r.sessions ?? [])).catch(() => {})
+  }, [])
+
+  useWebSocket(useCallback((event) => {
+    if (event.type === 'session.updated' || event.type === 'span.created') {
+      refresh()
+    }
+  }, [refresh]))
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 p-6">

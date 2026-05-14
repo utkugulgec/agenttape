@@ -26,7 +26,7 @@ func TestHealth_OK(t *testing.T) {
 		t.Fatalf("apply migrations: %v", err)
 	}
 
-	h := api.NewHandler(pool, storage.NewSessionRepo(pool), storage.NewSpanRepo(pool))
+	h := api.NewHandler(pool, storage.NewSessionRepo(pool), storage.NewSpanRepo(pool), api.NewHub())
 	srv := httptest.NewServer(http.HandlerFunc(h.Health))
 	t.Cleanup(srv.Close)
 

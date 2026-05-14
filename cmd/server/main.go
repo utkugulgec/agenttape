@@ -45,16 +45,18 @@ func main() {
 
 	sessions := storage.NewSessionRepo(pool)
 	spans := storage.NewSpanRepo(pool)
+	hub := api.NewHub()
 
 	r := chi.NewRouter()
 	r.Use(api.RequestLogger)
 
-	h := api.NewHandler(pool, sessions, spans)
+	h := api.NewHandler(pool, sessions, spans, hub)
 	r.Get("/health", h.Health)
 	r.Get("/sessions", h.ListSessions)
 	r.Get("/sessions/{id}", h.GetSession)
 	r.Get("/sessions/{id}/spans", h.ListSpans)
 	r.Post("/v1/traces", h.IngestTraces)
+	r.Get("/ws", hub.ServeWS)
 
 	srv := &http.Server{
 		Addr:    ":" + cfg.HTTPPort,

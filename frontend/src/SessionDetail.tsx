@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { api } from './api'
 import type { Session, Span, SpanNode } from './types'
 import FlowDiagram from './FlowDiagram'
 import { interpretSpan } from './semantic'
+import { useWebSocket } from './useWebSocket'
 
 function buildTree(spans: Span[]): SpanNode[] {
   const bySpanId = new Map<string, SpanNode>()
@@ -255,6 +256,24 @@ export default function SessionDetail({ sessionId, onBack }: Props) {
 
   // clear selection when switching views
   useEffect(() => { setSelectedSpan(null) }, [view])
+
+  useWebSocket(useCallback((event) => {
+    if (event.type === 'span.created') {
+      const span = event.payload as Span
+      if (span.session_id !== sessionId) return
+      setAllSpans((prev) => {
+        if (prev.some((s) => s.id === span.id)) return prev
+        const next = [...prev, span]
+        setRoots(buildTree(next))
+        return next
+      })
+    }
+    if (event.type === 'session.updated') {
+      const sess = event.payload as Session
+      if (sess.id !== sessionId) return
+      setSession(sess)
+    }
+  }, [sessionId]))
 
   const sessionStartMs = session ? new Date(session.started_at).getTime() : 0
   const sessionDurationMs = session?.duration_ms ?? 1

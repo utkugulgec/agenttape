@@ -30,7 +30,7 @@ func TestIngestTraces(t *testing.T) {
 
 	sessions := storage.NewSessionRepo(pool)
 	spans := storage.NewSpanRepo(pool)
-	h := api.NewHandler(pool, sessions, spans)
+	h := api.NewHandler(pool, sessions, spans, api.NewHub())
 
 	// fixed IDs so assertions are deterministic
 	traceID := bytes.Repeat([]byte{0xab}, 16) // 32-char hex: abab...
@@ -172,7 +172,7 @@ func TestIngestTraces_Idempotent(t *testing.T) {
 
 	sessions := storage.NewSessionRepo(pool)
 	spans := storage.NewSpanRepo(pool)
-	h := api.NewHandler(pool, sessions, spans)
+	h := api.NewHandler(pool, sessions, spans, api.NewHub())
 
 	traceID := bytes.Repeat([]byte{0xcc}, 16)
 	spanID := bytes.Repeat([]byte{0x01}, 8)

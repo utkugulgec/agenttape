@@ -16,10 +16,11 @@ type Handler struct {
 	pool     *pgxpool.Pool
 	sessions *storage.SessionRepo
 	spans    *storage.SpanRepo
+	hub      *Hub
 }
 
-func NewHandler(pool *pgxpool.Pool, sessions *storage.SessionRepo, spans *storage.SpanRepo) *Handler {
-	return &Handler{pool: pool, sessions: sessions, spans: spans}
+func NewHandler(pool *pgxpool.Pool, sessions *storage.SessionRepo, spans *storage.SpanRepo, hub *Hub) *Handler {
+	return &Handler{pool: pool, sessions: sessions, spans: spans, hub: hub}
 }
 
 func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {

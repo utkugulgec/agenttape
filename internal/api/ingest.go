@@ -105,6 +105,7 @@ func (h *Handler) IngestTraces(w http.ResponseWriter, r *http.Request) {
 					writeError(w, http.StatusInternalServerError, "failed to insert span")
 					return
 				}
+				h.hub.Broadcast(EventSpanCreated, s)
 
 				// when the root span arrives with an end time, close the session
 				if isRoot && endedAt != nil {
@@ -115,6 +116,9 @@ func (h *Handler) IngestTraces(w http.ResponseWriter, r *http.Request) {
 					if err := h.sessions.UpdateFromRootSpan(ctx, traceID, span.Name, status, endedAt, durationMs); err != nil {
 						writeError(w, http.StatusInternalServerError, "failed to update session")
 						return
+					}
+					if sess, err := h.sessions.GetByTraceID(ctx, traceID); err == nil {
+						h.hub.Broadcast(EventSessionUpdated, sess)
 					}
 				}
 			}
